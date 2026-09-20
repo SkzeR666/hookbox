@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/postgres"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Inbox {
+  id        String    @id @default(cuid())
+  publicId  String    @unique
+  name      String    @default("Inbox")
+  token     String
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+  requests  Request[]
+
+  @@map("inboxes")
+}
+
+model Request {
+  id            String    @id @default(cuid())
+  inboxId       String
+  inbox         Inbox     @relation(fields: [inboxId], references: [id], onDelete: Cascade)
+  method        String
+  path          String
+  query         String    @default("{}")
+  headers       String    @default("{}")
+  body          String    @default("")
+  contentType   String?
+  ip            String?
+  receivedAt    DateTime  @default(now())
+  sizeBytes     Int       @default(0)
+  bodyTruncated Boolean   @default(false)
+  replays       Replay[]
+
+  @@index([inboxId, receivedAt])
+  @@map("requests")
+}
+
+model Replay {
+  id              String    @id @default(cuid())
+  requestId       String
+  request         Request   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  targetUrl       String
+  method          String
+  headers         String    @default("{}")
+  body            String    @default("")
+  statusCode      Int?
+  responseHeaders String    @default("{}")
+  responseBody    String    @default("")
+  durationMs      Int       @default(0)
+  error           String?
+  createdAt       DateTime  @default(now())
+
+  @@index([requestId, createdAt])
+  @@map("replays")
+}

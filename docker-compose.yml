@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hookbox
+      POSTGRES_PASSWORD: hookbox
+      POSTGRES_DB: hookbox
+    volumes:
+      - hookbox_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hookbox -d hookbox"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://hookbox:hookbox@db:5432/hookbox?schema=public
+      APP_URL: http://localhost:3000
+      BODY_LIMIT_BYTES: "1000000"
+      HEADERS_LIMIT_BYTES: "65536"
+      RATE_LIMIT_PER_MINUTE: "120"
+      INBOX_TTL_HOURS: "24"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  hookbox_pgdata:

@@ -1,0 +1,24 @@
+{
+  "name": "@hookbox/database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "prebuild": "prisma generate && prisma generate --schema prisma/schema.postgres.prisma",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate && prisma generate --schema prisma/schema.postgres.prisma",
+    "db:generate:postgres": "prisma generate --schema prisma/schema.postgres.prisma",
+    "db:push": "prisma db push",
+    "db:push:postgres": "prisma db push --schema prisma/schema.postgres.prisma && prisma generate --schema prisma/schema.postgres.prisma",
+    "db:studio": "prisma studio --schema prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.18.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.18.0",
+    "typescript": "^5.4.0"
+  }
+}

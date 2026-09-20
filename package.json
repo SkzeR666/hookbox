@@ -1,0 +1,33 @@
+{
+  "name": "hookbox",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "npm run build -w @hookbox/core && node --test packages/core/test/*.test.ts",
+    "typecheck": "turbo run typecheck",
+    "db:push": "npm run db:push --workspace @hookbox/database",
+    "db:push:postgres": "npm run db:push:postgres --workspace @hookbox/database",
+    "db:generate": "npm run db:generate --workspace @hookbox/database",
+    "db:studio": "npm run db:studio --workspace @hookbox/database"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@12.0.2",
+  "allowScripts": {
+    "@prisma/client@5.22.0": true,
+    "prisma@5.22.0": true,
+    "@prisma/engines@5.22.0": true
+  }
+}
