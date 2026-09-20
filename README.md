@@ -40,7 +40,8 @@ Open http://localhost:3000. The webhook URL becomes `http://localhost:3000/i/<in
 - Real-time request inspection via SSE
 - Headers / query / body / raw view
 - Copy as cURL, copy JSON, copy raw
-- Request replay with editable method, headers and body
+- Request replay with editable method, headers and body (rows or raw JSON)
+- Interactive demo at `/demo` — the full dashboard on sample data, no setup
 - SSRF-protected replay (private ranges, metadata endpoints, DNS checks)
 - Request size and rate limits from day one
 - Anonymous inboxes, no account required (24h TTL)
@@ -53,7 +54,7 @@ Open http://localhost:3000. The webhook URL becomes `http://localhost:3000/i/<in
 | --------------------- | ---------------------------------------------------- |
 | **Inbox**             | A public URL like `https://hookbox.dev/i/7f8d2a9c`   |
 | **Request**           | Everything Hookbox receives — method, path, headers, query, body, IP, size |
-| **Replay**            | Take a captured request and send it to any target URL, editted |
+| **Replay**            | Take a captured request and send it to any target URL, edited |
 
 ## Monorepo layout
 

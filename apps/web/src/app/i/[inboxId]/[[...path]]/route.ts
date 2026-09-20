@@ -11,7 +11,7 @@ type Params = { params: Promise<{ inboxId: string; path?: string[] }> };
 type Context = { params: Params["params"] };
 
 async function handle(req: NextRequest, params: Context, isHead = false) {
-  const { inboxId, path } = await params;
+  const { inboxId } = await params.params;
 
   if (!checkRateLimit(inboxId)) {
     return json(429, { error: "rate_limited", detail: "Too many requests." });
@@ -71,29 +71,29 @@ function json(status: number, body: unknown): NextResponse {
 }
 
 export async function GET(req: NextRequest, ctx: Params) {
-  return handle(req, ctx.params);
+  return handle(req, ctx);
 }
 
 export async function POST(req: NextRequest, ctx: Params) {
-  return handle(req, ctx.params);
+  return handle(req, ctx);
 }
 
 export async function PUT(req: NextRequest, ctx: Params) {
-  return handle(req, ctx.params);
+  return handle(req, ctx);
 }
 
 export async function PATCH(req: NextRequest, ctx: Params) {
-  return handle(req, ctx.params);
+  return handle(req, ctx);
 }
 
 export async function DELETE(req: NextRequest, ctx: Params) {
-  return handle(req, ctx.params);
+  return handle(req, ctx);
 }
 
 export async function OPTIONS(req: NextRequest, ctx: Params) {
-  return handle(req, ctx.params);
+  return handle(req, ctx);
 }
 
 export async function HEAD(req: NextRequest, ctx: Params) {
-  return handle(req, ctx.params, true);
+  return handle(req, ctx, true);
 }

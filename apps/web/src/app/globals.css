@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@source "../../../../packages/ui/src";
+
 @theme {
   --color-background: #070907;
   --color-panel: #0c0f0d;
@@ -20,6 +22,10 @@
   --accent: #2dd4a7;
   --accent-hover: #24b993;
   --danger: #ef4444;
+
+  /* motion — tuned curves, not defaults */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html,
@@ -37,6 +43,8 @@ body {
     "Segoe UI",
     Roboto,
     sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .font-mono,
@@ -54,7 +62,7 @@ kbd {
 }
 
 ::selection {
-  background: rgba(45, 212, 167, 0.3);
+  background: rgba(45, 212, 167, 0.25);
 }
 
 ::-webkit-scrollbar {
@@ -67,7 +75,79 @@ kbd {
 ::-webkit-scrollbar-thumb {
   background: #243028;
   border-radius: 5px;
+  border: 2px solid var(--bg);
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #31412f;
+}
+
+/* ---- motion primitives ----
+   Short, ease-out, transform+opacity only. No glow, no bounce. */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: rise 420ms var(--ease-out-expo) both;
+}
+.animate-fade {
+  animation: fade 200ms ease-out both;
+}
+.animate-settle {
+  animation: settle 200ms var(--ease-out-quart) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-fade,
+  .animate-settle {
+    animation: none;
+  }
+}
+
+/* ---- mobile niceties ---- */
+
+@media (hover: none) {
+  /* no hover-dependent reveals on touch */
+  .hover-only {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* prevent iOS zoom on focus without shrinking desktop type */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }

@@ -3,7 +3,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Badge, Button } from "@hookbox/ui";
+import {
+  ArrowLeft,
+  BadgeCheck,
+  Check,
+  Copy,
+  Inbox as InboxIcon,
+  LoaderCircle,
+  Pencil,
+  RadioTower,
+  Trash2,
+  X,
+} from "lucide-react";
+import { Badge, Button, IconButton } from "@hookbox/ui";
 import type { RequestListItem } from "@hookbox/core";
 import { RequestList } from "@/components/request-list";
 import { RequestInspector } from "@/components/request-inspector";
@@ -21,6 +33,7 @@ export default function InboxDashboard({
   publicId,
   name,
   token,
+  createdAt,
   expiresAt,
   initialRequestCount,
 }: Props) {
@@ -32,6 +45,7 @@ export default function InboxDashboard({
   const [newName, setNewName] = useState(name);
   const [count, setCount] = useState(initialRequestCount);
   const [deleting, setDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [origin, setOrigin] = useState("");
   const esRef = useRef<EventSource | null>(null);
   const seenRef = useRef(new Set<string>());
@@ -95,107 +109,185 @@ export default function InboxDashboard({
   };
 
   const rename = async () => {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === name) {
+      setRenaming(false);
+      setNewName(name);
+      return;
+    }
     const res = await fetch(`/api/inboxes/${publicId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         "x-hookbox-token": token,
       },
-      body: JSON.stringify({ name: newName }),
+      body: JSON.stringify({ name: trimmed }),
     });
     if (res.ok) setRenaming(false);
   };
 
   const destroy = async () => {
-    if (!confirm("Delete this inbox and all its requests?")) return;
     setDeleting(true);
     const res = await fetch(`/api/inboxes/${publicId}`, {
       method: "DELETE",
       headers: { "x-hookbox-token": token },
     });
     if (res.ok) router.push("/");
-    else setDeleting(false);
+    else {
+      setDeleting(false);
+      setConfirmingDelete(false);
+    }
+  };
+
+  const cancelRename = () => {
+    setRenaming(false);
+    setNewName(name);
   };
 
   const expiresLabel = expiresAt
     ? `expires ${new Date(expiresAt).toLocaleString()}`
-    : "never";
+    : "never expires";
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-svh flex-col">
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] px-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-4">
+        <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"
-            className="font-mono text-[13px] font-medium uppercase tracking-[0.25em] text-[var(--accent)]"
+            aria-label="Back to home"
+            className="flex shrink-0 items-center gap-2 font-mono text-[13px] font-medium tracking-[0.25em] text-[var(--accent)] uppercase transition-opacity duration-150 hover:opacity-80"
           >
+            <ArrowLeft className="size-3.5" strokeWidth={2} />
             Hookbox
           </Link>
           <div className="hidden h-4 w-px bg-[var(--border)] sm:block" />
           {renaming ? (
-            <div className="flex items-center gap-2">
+            <div className="animate-fade flex items-center gap-1.5">
               <input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && rename()}
-                className="h-8 w-56 rounded-md border border-[var(--border)] bg-[#0c0f0d] px-2 font-mono text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void rename();
+                  if (e.key === "Escape") cancelRename();
+                }}
+                aria-label="Inbox name"
+                className="h-8 w-44 rounded-md border border-[var(--border)] bg-[#0c0f0d] px-2 font-mono text-sm transition-colors focus:border-[var(--accent)]/50 focus:outline-none sm:w-56"
                 autoFocus
               />
-              <Button size="sm" onClick={rename}>
-                Save
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setRenaming(false)}>
-                Cancel
-              </Button>
+              <IconButton
+                label="Save name"
+                size="sm"
+                onClick={() => void rename()}
+              >
+                <Check />
+              </IconButton>
+              <IconButton label="Cancel" size="sm" onClick={cancelRename}>
+                <X />
+              </IconButton>
             </div>
           ) : (
             <button
               onClick={() => setRenaming(true)}
-              className="truncate font-mono text-[15px] text-[var(--fg)] hover:text-[var(--accent)]"
-              title="Rename"
+              aria-label={`Rename inbox ${name}`}
+              className="group inline-flex min-w-0 cursor-pointer items-center gap-1.5 rounded-sm"
             >
-              {name}
+              <span className="truncate font-mono text-[15px] transition-colors duration-150 group-hover:text-[var(--accent)]">
+                {name}
+              </span>
+              <Pencil
+                className="size-3 shrink-0 text-[var(--muted-fg)] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                aria-hidden
+              />
             </button>
           )}
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
-          <Badge tone="green">
-            <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+          <span className="inline-flex items-center gap-1.5 rounded border border-emerald-400/20 bg-emerald-500/12 px-2 py-1 font-mono text-[11px] font-medium text-emerald-300">
+            <span
+              className="animate-pulse inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
+              aria-hidden
+            />
             {count} request{count === 1 ? "" : "s"}
-          </Badge>
-          <span className="hidden font-mono text-[12px] text-[var(--muted-fg)] md:inline">
-            {expiresLabel}
+          </span>
+          <span
+            className="hidden font-mono text-[12px] text-[var(--muted-fg)] lg:inline-flex lg:items-center lg:gap-1.5"
+            title={new Date(createdAt).toLocaleString()}
+          >
+            <BadgeCheck className="size-3" aria-hidden />
+            created {relativeTime(createdAt)} · {expiresLabel}
           </span>
         </div>
       </header>
 
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[#090c0a] px-4 py-3 sm:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-2 font-mono text-[13px]">
-          <span className="text-[var(--muted-fg)]">POST</span>
+          <Badge tone="green" className="shrink-0 font-semibold">
+            POST
+          </Badge>
           <code className="truncate text-[var(--fg)]">{url}</code>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button size="sm" variant="secondary" onClick={copyUrl}>
-            {copied ? "Copied" : "Copy URL"}
+            {copied ? (
+              <>
+                <Check className="size-3.5 text-[var(--accent)]" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="size-3.5" />
+                Copy URL
+              </>
+            )}
           </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={destroy}
-            disabled={deleting}
-          >
-            {deleting ? "Deleting…" : "Delete"}
-          </Button>
+
+          {confirmingDelete ? (
+            <div className="animate-fade flex items-center gap-1.5">
+              <span className="font-mono text-[12px] text-red-300">
+                Delete inbox?
+              </span>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={destroy}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <LoaderCircle className="size-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="size-3.5" />
+                )}
+                Confirm
+              </Button>
+              <IconButton
+                label="Cancel delete"
+                size="sm"
+                onClick={() => setConfirmingDelete(false)}
+              >
+                <X />
+              </IconButton>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => setConfirmingDelete(true)}
+            >
+              <Trash2 className="size-3.5" />
+              Delete
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[380px_1fr]">
-        <div className="min-h-0 overflow-hidden border-r border-[var(--border)]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[400px_1fr]">
+        <div className="min-h-0 overflow-hidden border-b border-[var(--border)] lg:border-r lg:border-b-0">
           <RequestList
             requests={requests}
             selectedId={selectedId}
             onSelect={setSelectedId}
+            live
           />
         </div>
         <div className="min-h-0 overflow-hidden">
@@ -222,15 +314,46 @@ function mergeRequests(
     .slice(0, 200);
 }
 
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 function EmptyState() {
   return (
-    <div className="flex h-full items-center justify-center p-8">
+    <div className="animate-fade flex h-full items-center justify-center p-8">
       <div className="max-w-md text-center">
-        <p className="font-mono text-sm text-[var(--muted-fg)]">
+        <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--bg-2)]">
+          <InboxIcon
+            className="size-6 text-[var(--muted-fg)]"
+            strokeWidth={1.5}
+            aria-hidden
+          />
+          <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+            <span
+              className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent)] opacity-40"
+              aria-hidden
+            />
+            <span
+              className="relative inline-flex h-3.5 w-3.5 rounded-full bg-[var(--accent)] opacity-80"
+              aria-hidden
+            />
+          </span>
+        </div>
+        <p className="mt-4 font-mono text-sm text-[var(--fg)]">
           Waiting for requests…
         </p>
-        <p className="mt-2 text-[13px] leading-relaxed text-[var(--muted-fg)]">
+        <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--muted-fg)]">
           Send anything to your inbox URL. It shows up here in real time.
+        </p>
+        <p className="mt-4 inline-flex items-center gap-1.5 font-mono text-[11px] text-[var(--muted-fg)]">
+          <RadioTower className="size-3" aria-hidden />
+          streaming live via SSE
         </p>
       </div>
     </div>

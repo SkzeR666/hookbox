@@ -35,11 +35,18 @@ export default function CreateInboxButton() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <Button size="lg" onClick={create} disabled={loading}>
+    <div className="flex w-full flex-col items-center gap-3">
+      <Button
+        size="lg"
+        onClick={create}
+        disabled={loading}
+        className="w-full sm:w-auto"
+      >
         {loading ? "Creating…" : "Create a free inbox"}
       </Button>
-      {error && <p className="text-[13px] text-[--danger]">{error}</p>}
+      {error && (
+        <p className="animate-fade text-[13px] text-[--danger]">{error}</p>
+      )}
     </div>
   );
 }

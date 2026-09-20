@@ -7,7 +7,7 @@ export const Card = ({
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "rounded-lg border border-[var(--border)] bg-[var(--bg-2)]",
+      "rounded-lg border border-[var(--border)] bg-[var(--bg-2)] shadow-sm",
       className,
     )}
     {...props}

@@ -9,7 +9,8 @@
     ".": "./dist/index.js",
     "./http": "./dist/http.js",
     "./types": "./dist/types.js",
-    "./limits": "./dist/limits.js"
+    "./limits": "./dist/limits.js",
+    "./demo-data": "./dist/demo-data.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
