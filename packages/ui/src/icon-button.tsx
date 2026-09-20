@@ -1,11 +1,12 @@
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "./cn.js";
+import { Tooltip } from "./tooltip.js";
 
 export interface IconButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "ghost" | "secondary";
   size?: "sm" | "md";
-  /** Accessible label — also shown as native tooltip */
+  /** Accessible label — also shown as the custom tooltip */
   label: string;
 }
 
@@ -23,21 +24,22 @@ const VARIANTS = {
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ className, variant = "ghost", size = "md", label, ...props }, ref) => (
-    <button
-      ref={ref}
-      aria-label={label}
-      title={label}
-      className={cn(
-        "inline-flex cursor-pointer items-center justify-center",
-        "transition-[background-color,color,transform] duration-150 ease-out select-none",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/50",
-        "disabled:pointer-events-none disabled:opacity-50",
-        SIZES[size],
-        VARIANTS[variant],
-        className,
-      )}
-      {...props}
-    />
+    <Tooltip label={label}>
+      <button
+        ref={ref}
+        aria-label={label}
+        className={cn(
+          "inline-flex cursor-pointer items-center justify-center",
+          "transition-[background-color,color,transform] duration-150 ease-out select-none",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/50",
+          "disabled:pointer-events-none disabled:opacity-50",
+          SIZES[size],
+          VARIANTS[variant],
+          className,
+        )}
+        {...props}
+      />
+    </Tooltip>
   ),
 );
 IconButton.displayName = "IconButton";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Badge, Button, IconButton } from "@hookbox/ui";
+import { Badge, Button, IconButton, Select, Tooltip } from "@hookbox/ui";
 import type { Replay } from "@hookbox/core";
 import { cn } from "@hookbox/ui";
 import {
@@ -298,50 +298,51 @@ export function ReplayDialog({
 
           <div className="mt-4 grid grid-cols-[130px_1fr] items-end gap-3">
             <div>
-              <label
-                htmlFor="replay-method"
+              <span
+                id="replay-method-label"
                 className="mb-1.5 block font-mono text-[11px] tracking-wide text-[var(--muted-fg)] uppercase"
               >
                 Method
-              </label>
-              <select
-                id="replay-method"
+              </span>
+              <Select
+                aria-labelledby="replay-method-label"
+                aria-label="Replay HTTP method"
                 value={method}
-                onChange={(e) => setMethod(e.target.value)}
-                className={`${inputCls} cursor-pointer pr-8`}
-              >
-                {METHODS.map((m) => (
-                  <option key={m}>{m}</option>
-                ))}
-              </select>
+                onChange={setMethod}
+                options={METHODS}
+                size="sm"
+              />
             </div>
 
             <div className="flex items-center justify-between pb-1">
               <span className="font-mono text-[11px] tracking-wide text-[var(--muted-fg)] uppercase">
                 Headers
               </span>
-              <button
-                type="button"
-                onClick={toggleHeaderMode}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-1.5 py-0.5 font-mono text-[11px] text-[var(--muted-fg)] transition-colors hover:text-[var(--accent)]"
-                title={
+              <Tooltip
+                label={
                   headerMode === "rows"
                     ? "Switch to raw JSON editing"
                     : "Back to row editing"
                 }
               >
-                {headerMode === "rows" ? (
-                  <>
-                    <Braces className="size-3" />
-                    Edit as JSON
-                  </>
-                ) : (
-                  <>
-                    <Rows3 className="size-3" />
-                    Edit as rows
-                  </>
-                )}
-              </button>
+                <button
+                  type="button"
+                  onClick={toggleHeaderMode}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-1.5 py-0.5 font-mono text-[11px] text-[var(--muted-fg)] transition-colors hover:text-[var(--accent)]"
+                >
+                  {headerMode === "rows" ? (
+                    <>
+                      <Braces className="size-3" />
+                      Edit as JSON
+                    </>
+                  ) : (
+                    <>
+                      <Rows3 className="size-3" />
+                      Edit as rows
+                    </>
+                  )}
+                </button>
+              </Tooltip>
             </div>
           </div>
 

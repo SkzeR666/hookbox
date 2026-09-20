@@ -1,13 +1,40 @@
-# Hookbox
+<div align="center">
 
-> Inspect. Replay. Fix.
+# 📦 Hookbox
 
-Hookbox is an open-source webhook debugging workspace.
+### **Catch webhooks. Inspect everything. Replay in one click.**
 
-Catch HTTP requests, inspect every detail,
-and replay them against your application.
+**The open-source webhook debugging workspace** — a self-hosted request inspector
+and replay tool that replaces the webhook.site → ngrok → Postman → logs juggling act.
 
-## Quick start
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%E2%89%A520-brightgreen.svg)](package.json)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-2dd4a7.svg)](CONTRIBUTING.md)
+
+**[🚀 Try the live demo](https://hookbox.dev/demo)** — the real dashboard on sample data, zero setup · **[⚡ Create an inbox](https://hookbox.dev)**
+
+</div>
+
+---
+
+Hookbox is a **webhook inspector**, **request bin** and **HTTP replay tool** in a
+single self-hostable app. Point any webhook — Stripe, GitHub, Slack, Shopify,
+Twilio, IAP, whatever — at your inbox URL and watch requests arrive **in real
+time**. Open one up: full headers, parsed JSON body, query params, raw request,
+one-click cURL export. Then **replay it** against localhost with any edits you want.
+
+No account. No dashboard to configure. No losing the payload between five tools.
+
+```bash
+curl -X POST https://hookbox.dev/i/<inboxId> \
+  -H "Content-Type: application/json" \
+  -d '{"event":"payment_intent.succeeded"}'
+```
+
+→ it shows up instantly, streaming over SSE. That's the whole onboarding.
+
+## ⚡ Quick start
 
 ```bash
 cp .env.example .env        # sqlite works out of the box (no docker needed)
@@ -16,47 +43,51 @@ npm run db:push
 npm run dev
 ```
 
-Open http://localhost:3000, click **Create a free inbox**, then send it a request:
+Open http://localhost:3000, click **Create a free inbox**, and send it anything.
+Requires **Node ≥ 20**.
 
-```bash
-curl -X POST http://localhost:3000/i/<inboxId> \
-  -H "Content-Type: application/json" \
-  -d '{"hello":"world"}'
-```
-
-It appears in real time. Open it, inspect the headers, copy the cURL, and replay it against your own endpoint.
-
-### With Docker + PostgreSQL
+### 🐳 With Docker + PostgreSQL
 
 ```bash
 docker compose up --build
 ```
 
-Open http://localhost:3000. The webhook URL becomes `http://localhost:3000/i/<inboxId>`.
+## 🎯 Features
 
-## Features
+- 🎣 **Capture anything** — GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD, any content type, up to 1 MB
+- 📡 **Real-time** — requests stream in live via Server-Sent Events, no refresh
+- 🔬 **Inspect everything** — headers, query params, JSON body with syntax highlighting, raw request view
+- 📋 **One-click exports** — copy as cURL, copy as JSON, copy raw HTTP request
+- 🔁 **Replay & edit** — resend any request to any URL with editable method, headers and body
+- 🛡️ **SSRF-safe by design** — replay blocks private ranges, metadata endpoints, and DNS rebinding
+- 🕶️ **Zero signup** — anonymous inboxes with 24h TTL, no account, no email
+- 🧪 **Interactive demo** — `/demo` runs the full dashboard on sample data, nothing stored
+- 🐘 **SQLite or PostgreSQL** — sqlite for dev with zero config, Postgres for production
+- 📦 **Self-hostable** — your webhooks never leave your machine if you don't want them to
 
-- HTTP webhook capture — GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
-- Real-time request inspection via SSE
-- Headers / query / body / raw view
-- Copy as cURL, copy JSON, copy raw
-- Request replay with editable method, headers and body (rows or raw JSON)
-- Interactive demo at `/demo` — the full dashboard on sample data, no setup
-- SSRF-protected replay (private ranges, metadata endpoints, DNS checks)
-- Request size and rate limits from day one
-- Anonymous inboxes, no account required (24h TTL)
-- SQLite for dev, PostgreSQL for production
-- Self-hostable
+## 🆚 Why not just use…?
 
-## How it works
+| | Hookbox | webhook.site / requestbin | ngrok / tunnels | Postman / Insomnia |
+| --- | --- | --- | --- | --- |
+| Capture + inspect requests | ✅ | ✅ | ⚠️ via local inspector | ⚠️ manual |
+| Real-time stream | ✅ SSE | ⚠️ polling-ish | ✅ | ❌ |
+| Replay to **any** URL, fully edited | ✅ | ❌ | ❌ | ✅ |
+| Keep the whole loop in one place | ✅ | ❌ | ❌ | ⚠️ |
+| Self-host, data stays yours | ✅ AGPL | ❌ | 💰 paid tier | ⚠️ |
+| Zero signup | ✅ | ⚠️ | ⚠️ | ⚠️ |
 
-| Concept               | Description                                          |
-| --------------------- | ---------------------------------------------------- |
-| **Inbox**             | A public URL like `https://hookbox.dev/i/7f8d2a9c`   |
-| **Request**           | Everything Hookbox receives — method, path, headers, query, body, IP, size |
-| **Replay**            | Take a captured request and send it to any target URL, edited |
+Debugging webhooks shouldn't require a pile of unrelated tools.
+Hookbox is the place to run the whole investigation loop.
 
-## Monorepo layout
+## 🧠 How it works
+
+| Concept     | Description                                                                  |
+| ----------- | ---------------------------------------------------------------------------- |
+| **Inbox**   | A public URL like `https://hookbox.dev/i/7f8d2a9c`                            |
+| **Request** | Everything Hookbox receives — method, path, headers, query, body, IP, size   |
+| **Replay**  | Take a captured request and send it to any target URL, edited however you like |
+
+## 🗂 Monorepo layout
 
 ```
 hookbox/
@@ -65,7 +96,7 @@ hookbox/
 ├── packages/
 │   ├── core/          # ids, limits, curl builders, SSRF guard (pure TS)
 │   ├── database/      # Prisma schemas + client (sqlite & postgres)
-│   └── ui/            # shared UI primitives
+│   └── ui/            # shared UI primitives (fully custom controls — no native selects)
 ├── docker/
 │   └── Dockerfile
 ├── docs/
@@ -75,7 +106,7 @@ hookbox/
 └── SECURITY.md
 ```
 
-## Repository conventions
+## 📐 Repository conventions
 
 - **V1 scope**: capture → inspect → replay. Nothing that turns Hookbox into a
   "webhook platform" (workflows, transforms, teams, SDKs, MCP) is accepted.
@@ -87,8 +118,9 @@ hookbox/
 - **Realtime**: SSE endpoint in `apps/web/src/app/api/inboxes/[inboxId]/events`.
   In-memory event bus, so run a single instance. Multi-instance realtime is
   future work (Postgres LISTEN/NOTIFY).
+- **UI**: fully custom controls (selects, tooltips) — no native browser chrome.
 
-## Development
+## 🛠 Development
 
 ```bash
 npm run dev        # turbo — web on :3000
@@ -110,7 +142,7 @@ npm run db:generate:postgres
 
 Only the provider is regenerated; the models are identical across schemas.
 
-## Roadmap
+## 🗺 Roadmap
 
 - [x] V0 — create inbox, receive request, inspect
 - [x] V0.1 — realtime (SSE)
@@ -119,16 +151,24 @@ Only the provider is regenerated; the models are identical across schemas.
 - [ ] V0.4 — compare two requests
 - [ ] V1 — accounts + persistent inboxes
 
-## Why?
+## 🤝 Contributing
 
-Debugging webhooks shouldn't require a pile of unrelated tools —
-webhook.site → terminal → ngrok → Postman → logs → code → webhook.site.
+PRs welcome! Read [CONTRIBUTING.md](CONTRIBUTING.md) first — it's short.
+Security issues: [SECURITY.md](SECURITY.md).
 
-Hookbox is the place to run the whole investigation loop.
+## ⚖️ License
 
-## License
-
-AGPL-3.0 — see [LICENSE](LICENSE).
+**AGPL-3.0** — see [LICENSE](LICENSE).
 
 You can self-host Hookbox freely. If you modify and offer it as a network
 service, those modifications must stay under AGPL (see the LICENSE for details).
+
+---
+
+<div align="center">
+
+**Hookbox** — inspect. replay. fix.
+
+⭐ Star the repo if it saved you a debugging session.
+
+</div>

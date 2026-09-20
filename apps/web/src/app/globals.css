@@ -14,6 +14,8 @@
 }
 
 :root {
+  color-scheme: dark;
+
   --bg: #070907;
   --bg-2: #0c0f0d;
   --border: #1f2a25;
@@ -63,6 +65,13 @@ kbd {
 
 ::selection {
   background: rgba(45, 212, 167, 0.25);
+}
+
+/* Firefox — keep scrollbars themed without WebKit's ::-webkit-* hooks.
+     scrollbar-width/color are inherited, so this covers every element. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #243028 transparent;
 }
 
 ::-webkit-scrollbar {

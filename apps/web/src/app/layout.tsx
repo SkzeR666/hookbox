@@ -2,10 +2,38 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 
+const title = "Hookbox — Webhook Inspector, Request Bin & HTTP Replay Tool";
+const description =
+  "Open-source webhook debugging workspace. Catch any webhook in real time, inspect headers, JSON body and raw request, then replay it — self-hosted, no signup. AGPL-3.0.";
+
 export const metadata: Metadata = {
-  title: "Hookbox — inspect, replay, fix",
-  description:
-    "Catch any webhook. See exactly what happened. Replay it when you're ready.",
+  title,
+  description,
+  keywords: [
+    "webhook inspector",
+    "webhook debugger",
+    "request bin",
+    "request inspector",
+    "http replay",
+    "webhook testing tool",
+    "webhook.site alternative",
+    "self-hosted requestbin",
+    "stripe webhook debugging",
+    "open source webhook tool",
+  ],
+  openGraph: {
+    title,
+    description,
+    type: "website",
+    siteName: "Hookbox",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
+  applicationName: "Hookbox",
 };
 
 export const viewport: Viewport = {

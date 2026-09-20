@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge } from "@hookbox/ui";
+import { Badge, Tooltip } from "@hookbox/ui";
 import type { RequestListItem } from "@hookbox/core";
 import { cn } from "@hookbox/ui";
 import { ChevronRight, Inbox } from "lucide-react";
@@ -49,16 +49,15 @@ export function RequestList({
           {requests.length}
         </span>
         {live && (
-          <span
-            className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10.5px] text-[var(--accent)]"
-            title="Streaming via SSE"
-          >
-            <span
-              className="animate-pulse inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]"
-              aria-hidden
-            />
-            live
-          </span>
+          <Tooltip label="Streaming via SSE" className="ml-auto">
+            <span className="inline-flex cursor-default items-center gap-1.5 font-mono text-[10.5px] text-[var(--accent)]">
+              <span
+                className="animate-pulse inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]"
+                aria-hidden
+              />
+              live
+            </span>
+          </Tooltip>
         )}
       </div>
 
@@ -96,12 +95,17 @@ export function RequestList({
                     <span className="hidden shrink-0 font-mono text-[11px] text-[var(--muted-fg)] md:inline">
                       {formatSize(r.sizeBytes)}
                     </span>
-                    <span
-                      className="hidden shrink-0 font-mono text-[11px] text-[var(--muted-fg)] sm:inline"
-                      title={new Date(r.receivedAt).toLocaleString()}
+                    <Tooltip
+                      label={new Date(r.receivedAt).toLocaleString()}
+                      className="hidden shrink-0 sm:inline-flex"
                     >
-                      {formatTime(r.receivedAt)}
-                    </span>
+                      <span
+                        suppressHydrationWarning
+                        className="cursor-default font-mono text-[11px] text-[var(--muted-fg)]"
+                      >
+                        {formatTime(r.receivedAt)}
+                      </span>
+                    </Tooltip>
                     <ChevronRight
                       aria-hidden
                       className={cn(

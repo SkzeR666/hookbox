@@ -5,3 +5,5 @@ export * from "./card.js";
 export * from "./input.js";
 export * from "./icon-button.js";
 export * from "./kbd.js";
+export * from "./select.js";
+export * from "./tooltip.js";
