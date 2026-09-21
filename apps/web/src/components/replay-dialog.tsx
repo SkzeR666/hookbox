@@ -16,6 +16,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { InsetPanel, InsetPanelHeader, TileLabel } from "./bento";
 
 interface Props {
   requestId: string;
@@ -59,6 +60,10 @@ function rowsFromHeaders(headers: Record<string, string>): HeaderRow[] {
     value,
   }));
 }
+
+/** h-9 control height — every form control in the dialog shares this line. */
+const CONTROL_CLS =
+  "h-9 w-full rounded-md border border-[var(--border)] bg-[#0c0f0d] px-3 font-mono text-[13px] text-[var(--fg)] placeholder:text-[#5b645e] transition-colors hover:border-[#2a362f] focus:border-[var(--accent)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/25";
 
 export function ReplayDialog({
   requestId,
@@ -160,6 +165,11 @@ export function ReplayDialog({
   const addRow = (key = "", value = "") =>
     setRows((r) => [...r, { id: nextRowId(), key, value }]);
 
+  /** Drop a row that was left completely empty. */
+  const dropIfEmpty = (row: HeaderRow) => {
+    if (!row.key.trim() && !row.value.trim()) removeRow(row.id);
+  };
+
   const updateRow = (id: number, patch: Partial<HeaderRow>) =>
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...patch } : row)));
 
@@ -244,24 +254,22 @@ export function ReplayDialog({
     });
   };
 
-  const inputCls =
-    "w-full rounded-md border border-[var(--border)] bg-[#0c0f0d] px-3 font-mono text-[13px] text-[var(--fg)] placeholder:text-[#5b645e] transition-colors hover:border-[#2a362f] focus:border-[var(--accent)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/25";
-
   return (
     <div
       className="animate-fade fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px]"
       onClick={onClose}
     >
+      {/* ── the dialog itself is a bento tile — same recipe as the dashboard ── */}
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="replay-title"
         onKeyDown={trapFocus}
-        className="animate-settle flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-2)] shadow-xl shadow-black/50"
+        className="animate-settle flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[#0a0e0c] shadow-xl shadow-black/50"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-5 py-3">
+        <div className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border)] px-4">
           <h2
             id="replay-title"
             className="inline-flex items-center gap-2 font-mono text-sm font-medium text-[var(--fg)]"
@@ -275,154 +283,146 @@ export function ReplayDialog({
         </div>
 
         <form
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto p-5"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-5"
           onSubmit={(e) => {
             e.preventDefault();
             if (run?.status !== "sending" && targetUrl.trim()) void send();
           }}
         >
+          {/* ── target URL — h-9 control, explicit height so it can never
+                collapse (the input previously rendered ~zero-height) ── */}
           <label
             htmlFor="replay-target"
-            className="mb-1.5 block font-mono text-[11px] tracking-wide text-[var(--muted-fg)] uppercase"
+            className="mb-1.5 block font-mono text-[10.5px] font-medium tracking-[0.16em] text-[var(--muted-fg)] uppercase"
           >
             Target URL
           </label>
           <input
             id="replay-target"
             ref={targetRef}
+            type="url"
             value={targetUrl}
             onChange={(e) => setTargetUrl(e.target.value)}
             placeholder="https://localhost:3000/api/webhooks/stripe"
-            className={inputCls}
+            className={cn(CONTROL_CLS, "shrink-0")}
           />
 
-          <div className="mt-4 grid grid-cols-[130px_1fr] items-end gap-3">
-            <div>
-              <span
-                id="replay-method-label"
-                className="mb-1.5 block font-mono text-[11px] tracking-wide text-[var(--muted-fg)] uppercase"
+          {/* ── headers — method select and header editor share one grid so
+                both editing modes start (and wrap) at the same left edge ── */}
+          <div className="mt-4 flex items-center justify-between">
+            <TileLabel>Headers</TileLabel>
+            <Tooltip
+              label={
+                headerMode === "rows"
+                  ? "Switch to raw JSON editing"
+                  : "Back to row editing"
+              }
+            >
+              <button
+                type="button"
+                onClick={toggleHeaderMode}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-1.5 py-0.5 font-mono text-[11px] text-[var(--muted-fg)] transition-colors hover:text-[var(--accent)]"
               >
-                Method
-              </span>
-              <Select
-                aria-labelledby="replay-method-label"
-                aria-label="Replay HTTP method"
-                value={method}
-                onChange={setMethod}
-                options={METHODS}
-                size="sm"
-              />
-            </div>
-
-            <div className="flex items-center justify-between pb-1">
-              <span className="font-mono text-[11px] tracking-wide text-[var(--muted-fg)] uppercase">
-                Headers
-              </span>
-              <Tooltip
-                label={
-                  headerMode === "rows"
-                    ? "Switch to raw JSON editing"
-                    : "Back to row editing"
-                }
-              >
-                <button
-                  type="button"
-                  onClick={toggleHeaderMode}
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-1.5 py-0.5 font-mono text-[11px] text-[var(--muted-fg)] transition-colors hover:text-[var(--accent)]"
-                >
-                  {headerMode === "rows" ? (
-                    <>
-                      <Braces className="size-3" />
-                      Edit as JSON
-                    </>
-                  ) : (
-                    <>
-                      <Rows3 className="size-3" />
-                      Edit as rows
-                    </>
-                  )}
-                </button>
-              </Tooltip>
-            </div>
+                {headerMode === "rows" ? (
+                  <>
+                    <Braces className="size-3" />
+                    Edit as JSON
+                  </>
+                ) : (
+                  <>
+                    <Rows3 className="size-3" />
+                    Edit as rows
+                  </>
+                )}
+              </button>
+            </Tooltip>
           </div>
+          <div className="mt-1.5 grid grid-cols-[112px_1fr] items-start gap-2">
+            <Select
+              aria-label="Replay HTTP method"
+              value={method}
+              onChange={setMethod}
+              options={METHODS}
+              size="sm"
+            />
 
-          {headerMode === "rows" ? (
-            <div className="mt-1.5 space-y-2">
-              {rows.map((row) => (
-                <div key={row.id} className="group flex items-center gap-2">
-                  <input
-                    value={row.key}
-                    onChange={(e) => updateRow(row.id, { key: e.target.value })}
-                    placeholder="Header"
-                    aria-label="Header name"
-                    className={cn(inputCls, "h-9 w-2/5 shrink-0")}
-                  />
-                  <input
-                    value={row.value}
-                    onChange={(e) =>
-                      updateRow(row.id, { value: e.target.value })
-                    }
-                    placeholder="Value"
-                    aria-label="Header value"
-                    className={cn(inputCls, "h-9 min-w-0 flex-1")}
-                  />
-                  <IconButton
-                    label={`Remove ${row.key || "header"}`}
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => removeRow(row.id)}
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
-                  >
-                    <Trash2 />
-                  </IconButton>
-                </div>
-              ))}
-              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => addRow()}
-                  className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-dashed border-[var(--border)] px-2.5 py-1.5 font-mono text-[11.5px] text-[var(--muted-fg)] transition-colors hover:border-[var(--accent)]/40 hover:text-[var(--accent)]"
-                >
-                  <Plus className="size-3" />
-                  Add header
-                </button>
-                {QUICK_HEADERS.map(([k, v]) => (
+            {headerMode === "rows" ? (
+              <div className="min-w-0 space-y-1.5">
+                {rows.map((row) => (
+                  <div key={row.id} className="group flex min-w-0 items-center gap-2">
+                    <input
+                      value={row.key}
+                      onChange={(e) => updateRow(row.id, { key: e.target.value })}
+                      onBlur={() => dropIfEmpty(row)}
+                      placeholder="Header"
+                      aria-label="Header name"
+                      className={cn(CONTROL_CLS, "w-2/5 min-w-0 shrink-0")}
+                    />
+                    <input
+                      value={row.value}
+                      onChange={(e) =>
+                        updateRow(row.id, { value: e.target.value })
+                      }
+                      onBlur={() => dropIfEmpty(row)}
+                      placeholder="Value"
+                      aria-label="Header value"
+                      className={cn(CONTROL_CLS, "min-w-0 flex-1")}
+                    />
+                    <IconButton
+                      label={`Remove ${row.key || "header"}`}
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => removeRow(row.id)}
+                      className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100 [&_svg]:size-3.5"
+                    >
+                      <Trash2 />
+                    </IconButton>
+                  </div>
+                ))}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   <button
-                    key={k}
                     type="button"
-                    onClick={() => addRow(k, v)}
-                    className="inline-flex cursor-pointer items-center gap-1 rounded-md bg-white/5 px-2.5 py-1.5 font-mono text-[11.5px] text-[var(--muted-fg)] transition-colors hover:bg-white/10 hover:text-[var(--fg)]"
+                    onClick={() => addRow()}
+                    className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-dashed border-[var(--border)] px-2.5 py-1.5 font-mono text-[11.5px] text-[var(--muted-fg)] transition-colors hover:border-[var(--accent)]/40 hover:text-[var(--accent)]"
                   >
                     <Plus className="size-3" />
-                    {k}
+                    Add header
                   </button>
-                ))}
+                  {QUICK_HEADERS.map(([k, v]) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => addRow(k, v)}
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-md bg-white/5 px-2.5 py-1.5 font-mono text-[11.5px] text-[var(--muted-fg)] transition-colors hover:bg-white/10 hover:text-[var(--fg)]"
+                    >
+                      <Plus className="size-3" />
+                      {k}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="mt-1.5">
+            ) : (
               <textarea
                 value={jsonText}
                 onChange={(e) => setJsonText(e.target.value)}
                 rows={5}
                 aria-label="Headers as JSON"
                 spellCheck={false}
-                className={cn(inputCls, "resize-y leading-relaxed")}
+                className={cn(
+                  CONTROL_CLS,
+                  "h-auto min-w-0 resize-y py-2 leading-relaxed",
+                )}
               />
-            </div>
-          )}
+            )}
+          </div>
           {headersError && (
             <p className="animate-fade mt-1.5 font-mono text-[11px] text-[var(--danger)]">
               {headersError}
             </p>
           )}
 
-          <label
-            htmlFor="replay-body"
-            className="mb-1.5 mt-4 block font-mono text-[11px] tracking-wide text-[var(--muted-fg)] uppercase"
-          >
-            Body
-          </label>
+          {/* ── body ── */}
+          <TileLabel className="mt-4 mb-1.5">Body</TileLabel>
           <textarea
             id="replay-body"
             value={body}
@@ -430,7 +430,10 @@ export function ReplayDialog({
             onKeyDown={handleBodyTab}
             rows={6}
             spellCheck={false}
-            className={`${inputCls} resize-y leading-relaxed`}
+            className={cn(
+              CONTROL_CLS,
+              "h-auto shrink-0 resize-y py-2 leading-relaxed",
+            )}
           />
 
           {run?.status === "error" && (
@@ -441,57 +444,67 @@ export function ReplayDialog({
           )}
 
           {run?.status === "done" && run.result && (
-            <div className="animate-rise mt-4 rounded-md border border-[var(--border)] bg-[#090c0a] p-4">
-              <div className="mb-3 flex items-center gap-3 font-mono">
-                <Badge
-                  tone={
-                    run.result.statusCode !== null && run.result.statusCode < 400
-                      ? "green"
-                      : "red"
-                  }
-                >
-                  {run.result.statusCode ?? "—"}
-                </Badge>
-                <span className="inline-flex items-center gap-1 text-[12px] text-[var(--muted-fg)]">
-                  <Clock className="size-3" />
-                  {run.result.durationMs} ms
-                </span>
-                <span className="truncate text-[12px] text-[var(--fg)]">
-                  {run.result.targetUrl}
-                </span>
-              </div>
-              {Object.keys(run.result.responseHeaders).length > 0 && (
-                <div className="mb-3">
-                  <p className="mb-1 font-mono text-[11px] tracking-wide text-[var(--muted-fg)] uppercase">
-                    Response headers
-                  </p>
-                  <pre className="max-h-32 overflow-auto rounded border border-[var(--border)] bg-[#0c0f0d] p-3 font-mono text-[12px] text-[var(--fg)]">
-                    {Object.entries(run.result.responseHeaders)
-                      .map(([k, v]) => `${k}: ${v}`)
-                      .join("\n")}
+            <InsetPanel className="animate-rise mt-4 shrink-0">
+              <InsetPanelHeader
+                label="Response"
+                action={
+                  <div className="flex items-center gap-3 font-mono text-[12px]">
+                    <Badge
+                      tone={
+                        run.result.statusCode !== null &&
+                        run.result.statusCode < 400
+                          ? "green"
+                          : "red"
+                      }
+                    >
+                      {run.result.statusCode ?? "—"}
+                    </Badge>
+                    <span className="inline-flex items-center gap-1 text-[var(--muted-fg)]">
+                      <Clock className="size-3" />
+                      {run.result.durationMs} ms
+                    </span>
+                    <span className="max-w-48 truncate text-[var(--fg)]">
+                      {run.result.targetUrl}
+                    </span>
+                  </div>
+                }
+              />
+              <div className="min-h-0 space-y-3 overflow-y-auto p-4">
+                {Object.keys(run.result.responseHeaders).length > 0 && (
+                  <div>
+                    <TileLabel className="mb-1 text-[10px] tracking-[0.15em] text-[#5a6a60]">
+                      Response headers
+                    </TileLabel>
+                    <pre className="max-h-32 overflow-auto rounded-md border border-[var(--border)] bg-[#0c0f0d] p-3 font-mono text-[12px] text-[var(--fg)]">
+                      {Object.entries(run.result.responseHeaders)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join("\n")}
+                    </pre>
+                  </div>
+                )}
+                <div>
+                  <TileLabel className="mb-1 text-[10px] tracking-[0.15em] text-[#5a6a60]">
+                    Response body
+                  </TileLabel>
+                  <pre className="max-h-64 overflow-auto rounded-md border border-[var(--border)] bg-[#0c0f0d] p-3 font-mono text-[12px] text-[var(--fg)]">
+                    {run.result.responseBody || "(empty)"}
                   </pre>
                 </div>
-              )}
-              <p className="mb-1 font-mono text-[11px] tracking-wide text-[var(--muted-fg)] uppercase">
-                Response body
-              </p>
-              <pre className="max-h-64 overflow-auto rounded border border-[var(--border)] bg-[#0c0f0d] p-3 font-mono text-[12px] text-[var(--fg)]">
-                {run.result.responseBody || "(empty)"}
-              </pre>
-            </div>
+              </div>
+            </InsetPanel>
           )}
 
           {history.length > 0 && (
-            <div className="mt-6">
-              <p className="mb-2 inline-flex items-center gap-1.5 font-mono text-[11px] tracking-wide text-[var(--muted-fg)] uppercase">
+            <div className="mt-6 shrink-0">
+              <TileLabel className="mb-2 inline-flex items-center gap-1.5">
                 <History className="size-3" aria-hidden />
                 Past replays
-              </p>
+              </TileLabel>
               <ul className="max-h-44 space-y-1.5 overflow-y-auto pr-1">
                 {history.map((h) => (
                   <li
                     key={h.id}
-                    className="flex items-center gap-3 rounded border border-[var(--border)] bg-[#090c0a] px-3 py-2 font-mono text-[12px] transition-colors hover:border-[#2c3a32]"
+                    className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[#090c0a] px-3 py-2 font-mono text-[12px] transition-colors hover:border-[#2c3a32]"
                   >
                     <Badge tone={h.statusCode ? "green" : "red"}>
                       {h.statusCode ?? "—"}
@@ -509,7 +522,7 @@ export function ReplayDialog({
           )}
         </form>
 
-        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-[var(--border)] bg-[#090c0a] px-5 py-3">
+        <div className="flex h-14 shrink-0 items-center justify-end gap-2 border-t border-[var(--border)] bg-[#090c0a] px-4">
           <Button variant="ghost" type="button" onClick={onClose}>
             Cancel
           </Button>

@@ -59,6 +59,8 @@ docker compose up --build
 - 🔬 **Inspect everything** — headers, query params, JSON body with syntax highlighting, raw request view
 - 📋 **One-click exports** — copy as cURL, copy as JSON, copy raw HTTP request
 - 🔁 **Replay & edit** — resend any request to any URL with editable method, headers and body
+- 🧪 **Mock responses** — make any inbox answer with a canned status, headers, body and delay — perfect for testing retries, error paths and timeouts
+- ⚖️ **Compare requests** — pick any two captures and diff them side by side: method, path, headers, body, size and timing
 - 🛡️ **SSRF-safe by design** — replay blocks private ranges, metadata endpoints, and DNS rebinding
 - 🕶️ **Zero signup** — anonymous inboxes with 24h TTL, no account, no email
 - 🧪 **Interactive demo** — `/demo` runs the full dashboard on sample data, nothing stored
@@ -86,6 +88,8 @@ Hookbox is the place to run the whole investigation loop.
 | **Inbox**   | A public URL like `https://hookbox.dev/i/7f8d2a9c`                            |
 | **Request** | Everything Hookbox receives — method, path, headers, query, body, IP, size   |
 | **Replay**  | Take a captured request and send it to any target URL, edited however you like |
+| **Mock**    | A canned response the inbox answers with instead of the default ok — status, headers, body and delay you control in the dashboard |
+| **Compare** | Side-by-side diff of any two captured requests — spot the changed header or payload instantly |
 
 ## 🗂 Monorepo layout
 
@@ -144,12 +148,22 @@ Only the provider is regenerated; the models are identical across schemas.
 
 ## 🗺 Roadmap
 
-- [x] V0 — create inbox, receive request, inspect
-- [x] V0.1 — realtime (SSE)
-- [x] V0.2 — replay (edit method/headers/body, show response)
-- [ ] V0.3 — mock responses (status, headers, body, delay)
-- [ ] V0.4 — compare two requests
+- [x] **V0** — create inbox, receive request, inspect
+- [x] **V0.1** — realtime (SSE)
+- [x] **V0.2** — replay (edit method/headers/body, show response)
+- [x] **V0.3** — mock responses (status, headers, body, delay)
+- [x] **V0.4** — compare two requests
 - [ ] V1 — accounts + persistent inboxes
+
+**V0.3 in practice:** open your inbox dashboard → **Mock** → pick a status,
+content-type, extra headers, body and an artificial delay (0–30 s). While the
+preset is enabled, every request to the inbox URL answers with it — great for
+testing your retry logic against a 500, or a slow webhook with a 5 s delay.
+
+**V0.4 in practice:** hit **Compare** in the dashboard, then pick two requests
+from the list (A, then B). You get both identity cards and a field-by-field
+diff table with the changed cells highlighted — method, path, content-type,
+body and every non-noise header.
 
 ## 🤝 Contributing
 

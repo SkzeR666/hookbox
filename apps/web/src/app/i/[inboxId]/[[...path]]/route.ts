@@ -19,7 +19,7 @@ async function handle(req: NextRequest, params: Context, isHead = false) {
 
   const inbox = await prisma.inbox.findUnique({
     where: { publicId: inboxId },
-    select: { id: true, expiresAt: true },
+    select: { id: true, expiresAt: true, mock: true },
   });
 
   if (!inbox) {
@@ -58,6 +58,30 @@ async function handle(req: NextRequest, params: Context, isHead = false) {
   if (isHead) {
     return new NextResponse(null, { status });
   }
+
+  // V0.3 — mock response: an enabled preset overrides the default reply.
+  const mock = inbox.mock;
+  if (mock?.enabled) {
+    if (mock.delayMs > 0) {
+      await new Promise((r) => setTimeout(r, mock.delayMs));
+    }
+    let headers: Record<string, string> = {};
+    try {
+      headers = JSON.parse(mock.headers ?? "{}") as Record<string, string>;
+    } catch {
+      headers = {};
+    }
+    const body =
+      mock.status === 204 || mock.status === 304 ? null : mock.body || null;
+    return NextResponse.json(body, {
+      status: mock.status,
+      headers: {
+        "content-type": mock.contentType || "application/json",
+        ...headers,
+      },
+    });
+  }
+
   return json(status, {
     ok: true,
     id: stored.id,

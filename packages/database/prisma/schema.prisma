@@ -9,15 +9,32 @@ datasource db {
 }
 
 model Inbox {
-  id        String    @id @default(cuid())
-  publicId  String    @unique
-  name      String    @default("Inbox")
+  id        String         @id @default(cuid())
+  publicId  String         @unique
+  name      String         @default("Inbox")
   token     String
-  createdAt DateTime  @default(now())
+  createdAt DateTime       @default(now())
   expiresAt DateTime?
   requests  Request[]
+  mock      MockResponse?
 
   @@map("inboxes")
+}
+
+// V0.3 — canned response returned by the inbox URL instead of the default
+// 200 ok. One preset per inbox; delayMs is applied before replying.
+model MockResponse {
+  id             String   @id @default(cuid())
+  inboxId        String   @unique
+  inbox          Inbox    @relation(fields: [inboxId], references: [id], onDelete: Cascade)
+  enabled        Boolean  @default(true)
+  status         Int      @default(200)
+  headers        String   @default("{}")
+  body           String   @default("")
+  contentType    String   @default("application/json")
+  delayMs        Int      @default(0)
+
+  @@map("mock_responses")
 }
 
 model Request {

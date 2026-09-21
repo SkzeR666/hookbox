@@ -36,7 +36,7 @@ export function DashboardShell({
   children,
 }: DashboardShellProps) {
   return (
-    <div className="flex h-svh flex-col">
+    <div className="flex h-svh flex-col overflow-hidden">
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <Link
@@ -53,7 +53,7 @@ export function DashboardShell({
 
         <div className="flex shrink-0 items-center gap-3">
           {headerRight}
-          <span className="inline-flex items-center gap-1.5 rounded border border-emerald-400/20 bg-emerald-500/12 px-2 py-1 font-mono text-[11px] font-medium text-emerald-300">
+          <span className="inline-flex items-center gap-1.5 rounded border border-emerald-400/20 bg-emerald-500/12 px-2 py-1 font-mono text-[11px] leading-none font-medium text-emerald-300">
             <span
               className="animate-pulse inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"
               aria-hidden
@@ -63,7 +63,8 @@ export function DashboardShell({
         </div>
       </header>
 
-      <div className="flex min-h-14 shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[#090c0a] px-4 py-3 sm:px-6">
+      {/* URL bar — same h-14 line and bg as the landing tile chrome */}
+      <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[#090c0a] px-4 sm:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-2 font-mono text-[13px]">
           <Badge tone="green" className="shrink-0 font-semibold">
             {method}
@@ -76,11 +77,14 @@ export function DashboardShell({
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[400px_1fr]">
-        <div className="min-h-0 overflow-hidden border-b border-[var(--border)] lg:border-r lg:border-b-0">
+      {/* Bento canvas — both columns are inset tiles on the page bg */}
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 sm:gap-4 sm:p-4 lg:grid-cols-[400px_minmax(0,1fr)]">
+        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[#0a0e0c]">
           {list}
         </div>
-        <div className="min-h-0 overflow-hidden">{children}</div>
+        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[#0a0e0c]">
+          {children}
+        </div>
       </div>
     </div>
   );

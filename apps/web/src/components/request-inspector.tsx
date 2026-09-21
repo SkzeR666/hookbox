@@ -19,6 +19,13 @@ import {
 } from "lucide-react";
 import { ReplayDialog } from "./replay-dialog";
 import { JsonView } from "./json-view";
+import {
+  Dot,
+  InsetPanel,
+  InsetPanelHeader,
+  TileFooter,
+  TileHeader,
+} from "./bento";
 
 type Tab = "headers" | "query" | "body" | "raw";
 
@@ -135,8 +142,9 @@ export function RequestInspector({ requestId, data, onReplay, footerExtra }: Pro
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-3.5">
+    <div className="flex h-full min-h-0 flex-col">
+      {/* ── h-12 header — method + path + replay, aligned with the list header ── */}
+      <TileHeader className="justify-between gap-3 px-5">
         <div className="flex min-w-0 items-center gap-3 font-mono text-[13px]">
           <MethodBadge method={request.method} />
           <code className="truncate text-[var(--fg)]">
@@ -147,15 +155,16 @@ export function RequestInspector({ requestId, data, onReplay, footerExtra }: Pro
           <Play className="size-3.5" />
           Replay
         </Button>
-      </div>
+      </TileHeader>
 
-      <div className="flex shrink-0 items-center gap-1 border-b border-[var(--border)] px-4">
+      {/* ── h-12 tab line — underline tabs + copy actions, same height system ── */}
+      <TileHeader className="gap-1 px-4">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             className={cn(
-              "relative inline-flex cursor-pointer items-center gap-1.5 px-3 py-3 font-mono text-[12px] transition-colors",
+              "relative inline-flex h-12 cursor-pointer items-center gap-1.5 px-3 font-mono text-[12px] transition-colors",
               tab === id
                 ? "text-[var(--accent)]"
                 : "text-[var(--muted-fg)] hover:text-[var(--fg)]",
@@ -200,65 +209,73 @@ export function RequestInspector({ requestId, data, onReplay, footerExtra }: Pro
         >
           {copied === "raw" ? <Check className="text-[var(--accent)]" /> : <Copy />}
         </IconButton>
-      </div>
+      </TileHeader>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-5">
+      {/* ── scroll area — every tab renders inside an InsetPanel so the
+            content reads as a card inside the tile, like the landing ── */}
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-5">
         {tab === "headers" &&
           (fields.length ? (
-            <table className="animate-fade w-full font-mono text-[12.5px]">
-              <tbody>
-                {fields.map(([k, v]) => (
-                  <tr key={k} className="border-b border-[var(--border)] align-top">
-                    <td className="w-60 px-3 py-2.5 text-[var(--accent)]">{k}</td>
-                    <td className="break-all px-3 py-2.5 leading-relaxed whitespace-pre-wrap text-[var(--fg)]">
-                      {v}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <InsetPanel className="animate-fade">
+              <InsetPanelHeader label="Headers" />
+              <table className="w-full table-fixed font-mono text-[12.5px]">
+                <tbody>
+                  {fields.map(([k, v]) => (
+                    <tr key={k} className="border-b border-[var(--border)] align-top last:border-b-0">
+                      <td className="w-56 min-w-0 break-all px-4 py-2.5 text-[var(--accent)]">{k}</td>
+                      <td className="min-w-0 break-all px-4 py-2.5 leading-relaxed whitespace-pre-wrap text-[var(--fg)]">
+                        {v}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </InsetPanel>
           ) : (
             <EmptyNote>No headers.</EmptyNote>
           ))}
 
         {tab === "query" &&
           (queryEntries.length ? (
-            <table className="animate-fade w-full font-mono text-[12.5px]">
-              <tbody>
-                {queryEntries.map(([k, v]) => (
-                  <tr key={k} className="border-b border-[var(--border)] align-top">
-                    <td className="w-60 px-3 py-2.5 text-[var(--accent)]">{k}</td>
-                    <td className="break-all px-3 py-2.5 leading-relaxed text-[var(--fg)]">
-                      <JsonView text={JSON.stringify(v)} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <InsetPanel className="animate-fade">
+              <InsetPanelHeader label="Query params" />
+              <table className="w-full table-fixed font-mono text-[12.5px]">
+                <tbody>
+                  {queryEntries.map(([k, v]) => (
+                    <tr key={k} className="border-b border-[var(--border)] align-top last:border-b-0">
+                      <td className="w-56 min-w-0 break-all px-4 py-2.5 text-[var(--accent)]">{k}</td>
+                      <td className="min-w-0 break-all px-4 py-2.5 leading-relaxed text-[var(--fg)]">
+                        <JsonView text={JSON.stringify(v)} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </InsetPanel>
           ) : (
             <EmptyNote>No query params.</EmptyNote>
           ))}
 
         {tab === "body" &&
           (request.body ? (
-            <div className="animate-fade overflow-x-auto rounded-lg border border-[var(--border)] bg-[#0a0e0c]">
-              <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-2">
-                <span className="font-mono text-[10.5px] tracking-[0.15em] text-[#5a6a60] uppercase">
-                  request body
-                </span>
-                <button
-                  onClick={() => copy("body", request.body)}
-                  className="inline-flex cursor-pointer items-center gap-1 font-mono text-[11px] text-[#5a6a60] transition-colors hover:text-[var(--fg)]"
-                >
-                  {copied === "body" ? (
-                    <Check className="size-3 text-[var(--accent)]" />
-                  ) : (
-                    <Copy className="size-3" />
-                  )}
-                  {copied === "body" ? "copied" : "copy"}
-                </button>
-              </div>
-              <pre className="p-5 font-mono text-[12.5px] leading-[1.75] text-[var(--fg)]">
+            <InsetPanel className="animate-fade">
+              <InsetPanelHeader
+                label="Request body"
+                action={
+                  <button
+                    onClick={() => copy("body", request.body)}
+                    className="inline-flex cursor-pointer items-center gap-1 font-mono text-[11px] text-[#5a6a60] transition-colors hover:text-[var(--fg)]"
+                  >
+                    {copied === "body" ? (
+                      <Check className="size-3 text-[var(--accent)]" />
+                    ) : (
+                      <Copy className="size-3" />
+                    )}
+                    {copied === "body" ? "copied" : "copy"}
+                  </button>
+                }
+              />
+              <pre className="overflow-x-auto p-5 font-mono text-[12.5px] leading-[1.75] text-[var(--fg)] [overflow-wrap:anywhere] whitespace-pre-wrap">
                 <JsonView text={request.body} />
                 {request.bodyTruncated && (
                   <div className="mt-2 text-[var(--danger)]">
@@ -266,26 +283,32 @@ export function RequestInspector({ requestId, data, onReplay, footerExtra }: Pro
                   </div>
                 )}
               </pre>
-            </div>
+            </InsetPanel>
           ) : (
             <EmptyNote>No body.</EmptyNote>
           ))}
 
         {tab === "raw" && (
-          <pre className="animate-fade overflow-x-auto rounded-lg border border-[var(--border)] bg-[#0a0e0c] p-5 font-mono text-[12.5px] leading-[1.75] text-[var(--fg)]">
-            {raw}
-          </pre>
+          <InsetPanel className="animate-fade">
+            <InsetPanelHeader label="Raw request" />
+            <pre className="overflow-x-auto p-5 font-mono text-[12.5px] leading-[1.75] text-[var(--fg)] [overflow-wrap:anywhere] whitespace-pre-wrap">
+              {raw}
+            </pre>
+          </InsetPanel>
         )}
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-x-2.5 gap-y-0.5 border-t border-[var(--border)] px-5 py-3 font-mono text-[11px] whitespace-nowrap text-[var(--muted-fg)]">
-        <span>{request.ip ? `from ${request.ip}` : "from ?"}</span>
+      {/* ── min-h-14 footer — same metadata strip as the list tile ── */}
+      <TileFooter className="px-5">
+        <span className="truncate">{request.ip ? `from ${request.ip}` : "from ?"}</span>
         <Dot />
-        <span>{request.sizeBytes.toLocaleString()} B</span>
+        <span className="shrink-0">{request.sizeBytes.toLocaleString()} B</span>
         <Dot />
-        <span>received {new Date(request.receivedAt).toLocaleString()}</span>
+        <span className="truncate">
+          received {new Date(request.receivedAt).toLocaleString()}
+        </span>
         {footerExtra}
-      </div>
+      </TileFooter>
 
       {replaying && (
         <ReplayDialog
@@ -300,7 +323,7 @@ export function RequestInspector({ requestId, data, onReplay, footerExtra }: Pro
   );
 }
 
-function MethodBadge({ method }: { method: string }) {
+export function MethodBadge({ method }: { method: string }) {
   const TONE: Record<string, "green" | "blue" | "yellow" | "purple" | "red" | "gray"> = {
     GET: "blue",
     POST: "green",
@@ -314,14 +337,6 @@ function MethodBadge({ method }: { method: string }) {
     <Badge tone={TONE[method] ?? "gray"} className="shrink-0 font-semibold">
       {method}
     </Badge>
-  );
-}
-
-function Dot() {
-  return (
-    <span aria-hidden className="text-[var(--border)]">
-      ·
-    </span>
   );
 }
 

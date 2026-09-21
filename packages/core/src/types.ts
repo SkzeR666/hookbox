@@ -60,6 +60,16 @@ export interface Replay {
   createdAt: string;
 }
 
+/** V0.3 — canned response returned by an inbox URL instead of the default ok. */
+export interface MockResponse {
+  enabled: boolean;
+  status: number;
+  headers: Record<string, string>;
+  body: string;
+  contentType: string;
+  delayMs: number;
+}
+
 export interface SsrfLookupResult {
   url: string;
   host: string;

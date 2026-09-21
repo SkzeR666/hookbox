@@ -6,6 +6,7 @@ import { buildDemoDataset } from "@hookbox/core/demo-data";
 import { RequestList } from "@/components/request-list";
 import { RequestInspector } from "@/components/request-inspector";
 import { ReplayDialog } from "@/components/replay-dialog";
+import { CompareView } from "@/components/compare-view";
 import { DashboardShell, DashboardEmptyState } from "@/components/dashboard-shell";
 
 export default function DemoPage() {
@@ -13,7 +14,9 @@ export default function DemoPage() {
   const [requests, setRequests] = useState<RequestListItem[]>(dataset.list);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [replaying, setReplaying] = useState(false);
-  const [streamCount, setStreamCount] = useState(0);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareA, setCompareA] = useState<string | null>(null);
+  const [compareB, setCompareB] = useState<string | null>(null);
   const [streamedDetails, setStreamedDetails] = useState<
     Record<string, CapturedRequest>
   >({});
@@ -42,7 +45,6 @@ export default function DemoPage() {
             },
             ...prev,
           ]);
-          setStreamCount((c) => c + 1);
           setStreamedDetails((prev) => ({
             ...prev,
             [id]: {
@@ -71,45 +73,71 @@ export default function DemoPage() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  const detail = selectedId
-    ? (streamedDetails[selectedId] ?? dataset.details[selectedId] ?? null)
-    : null;
+  const detailFor = (id: string | null) =>
+    id
+      ? (streamedDetails[id] ?? dataset.details[id] ?? null)
+      : null;
+  const detail = detailFor(selectedId);
   const replayHistory = selectedId ? (dataset.replays[selectedId] ?? []) : [];
+
+  const toggleCompare = (id: string) => {
+    if (!compareA || (compareA && compareB)) {
+      setCompareA(id);
+      setCompareB(null);
+      return;
+    }
+    if (id === compareA) {
+      setCompareA(null);
+      return;
+    }
+    setCompareB(id);
+  };
+
+  const exitCompare = () => {
+    setCompareMode(false);
+    setCompareA(null);
+    setCompareB(null);
+  };
+
+  const compareData =
+    compareMode && compareA && compareB
+      ? { left: detailFor(compareA), right: detailFor(compareB) }
+      : undefined;
 
   return (
     <DashboardShell
       url="https://hookbox.dev/i/demo7f8d"
       requestCount={requests.length}
-      title={
-        <>
-          <span className="truncate font-mono text-[15px]">Demo inbox</span>
-          <span className="hidden rounded-full border border-[var(--border)] bg-[var(--bg-2)] px-2.5 py-0.5 font-mono text-[10.5px] tracking-[0.15em] text-[var(--muted-fg)] uppercase md:inline-block">
-            sandbox · nothing is real
-          </span>
-        </>
-      }
-      headerRight={
-        streamCount > 0 ? (
-          <span className="animate-fade hidden font-mono text-[11px] text-[var(--accent)] sm:inline">
-            +{streamCount} streamed in
-          </span>
-        ) : null
-      }
-      urlHint={
-        <span className="hidden font-mono text-[11.5px] text-[var(--muted-fg)] sm:inline">
-          ← pick a request to inspect it
-        </span>
-      }
+      title={<span className="truncate font-mono text-[15px]">Demo inbox</span>}
       list={
         <RequestList
           requests={requests}
           selectedId={selectedId}
           onSelect={setSelectedId}
           live
+          compareMode={compareMode}
+          compareA={compareA}
+          compareB={compareB}
+          onCompareToggle={toggleCompare}
         />
       }
     >
-      {selectedId && detail ? (
+      {compareMode && compareA && compareB ? (
+        <CompareView
+          leftId={compareA}
+          rightId={compareB}
+          data={compareData}
+          onClose={exitCompare}
+        />
+      ) : compareMode ? (
+        <DashboardEmptyState
+          icon={
+            <span className="font-mono text-lg text-[var(--accent)]">A|B</span>
+          }
+          title={compareA ? "Now pick B" : "Pick request A"}
+          description="Select two requests in the list to diff them side by side — method, path, headers and body."
+        />
+      ) : selectedId && detail ? (
         <>
           <RequestInspector
             requestId={selectedId}

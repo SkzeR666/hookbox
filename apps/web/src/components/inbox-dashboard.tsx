@@ -6,6 +6,8 @@ import {
   BadgeCheck,
   Check,
   Copy,
+  FlaskConical,
+  GitCompareArrows,
   Inbox as InboxIcon,
   LoaderCircle,
   Pencil,
@@ -18,6 +20,8 @@ import type { RequestListItem } from "@hookbox/core";
 import { RequestList } from "@/components/request-list";
 import { RequestInspector } from "@/components/request-inspector";
 import { DashboardShell, DashboardEmptyState } from "@/components/dashboard-shell";
+import { MockDialog } from "@/components/mock-dialog";
+import { CompareView } from "@/components/compare-view";
 
 interface Props {
   publicId: string;
@@ -45,6 +49,10 @@ export default function InboxDashboard({
   const [count, setCount] = useState(initialRequestCount);
   const [deleting, setDeleting] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [mocking, setMocking] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareA, setCompareA] = useState<string | null>(null);
+  const [compareB, setCompareB] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
   const esRef = useRef<EventSource | null>(null);
   const seenRef = useRef(new Set<string>());
@@ -143,6 +151,25 @@ export default function InboxDashboard({
     setNewName(name);
   };
 
+  const toggleCompare = (id: string) => {
+    if (!compareA || (compareA && compareB)) {
+      setCompareA(id);
+      setCompareB(null);
+      return;
+    }
+    if (id === compareA) {
+      setCompareA(null);
+      return;
+    }
+    setCompareB(id);
+  };
+
+  const exitCompare = () => {
+    setCompareMode(false);
+    setCompareA(null);
+    setCompareB(null);
+  };
+
   const expiresLabel = expiresAt
     ? `expires ${new Date(expiresAt).toLocaleString()}`
     : "never expires";
@@ -222,6 +249,28 @@ export default function InboxDashboard({
             )}
           </Button>
 
+          <Button
+            size="sm"
+            variant={compareMode ? "primary" : "secondary"}
+            onClick={() =>
+              compareMode
+                ? exitCompare()
+                : (setCompareMode(true), setCompareA(null), setCompareB(null))
+            }
+          >
+            <GitCompareArrows className="size-3.5" />
+            Compare
+          </Button>
+
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setMocking(true)}
+          >
+            <FlaskConical className="size-3.5" />
+            Mock
+          </Button>
+
           {confirmingDelete ? (
             <div className="animate-fade flex items-center gap-1.5">
               <span className="font-mono text-[12px] text-red-300">
@@ -266,10 +315,45 @@ export default function InboxDashboard({
           selectedId={selectedId}
           onSelect={setSelectedId}
           live
+          compareMode={compareMode}
+          compareA={compareA}
+          compareB={compareB}
+          onCompareToggle={toggleCompare}
         />
       }
     >
-      {selectedId ? (
+      {mocking && (
+        <MockDialog
+          inboxId={publicId}
+          token={token}
+          onClose={() => setMocking(false)}
+        />
+      )}
+      {compareMode && compareA && compareB ? (
+        <CompareView
+          leftId={compareA}
+          rightId={compareB}
+          onClose={exitCompare}
+        />
+      ) : compareMode ? (
+        <DashboardEmptyState
+          icon={
+            <GitCompareArrows
+              className="size-6 text-[var(--muted-fg)]"
+              strokeWidth={1.5}
+              aria-hidden
+            />
+          }
+          title={compareA ? "Now pick B" : "Pick request A"}
+          description="Select two requests in the list to diff them side by side — method, path, headers and body."
+        />
+      ) : mocking ? (
+        <MockDialog
+          inboxId={publicId}
+          token={token}
+          onClose={() => setMocking(false)}
+        />
+      ) : selectedId ? (
         <RequestInspector requestId={selectedId} />
       ) : (
         <DashboardEmptyState
